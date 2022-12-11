@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import math
 
-import grid_distortion
+from . import grid_distortion
 
 from utils import string_utils, safe_load, augmentation
 
@@ -31,7 +31,7 @@ def collate(batch):
     label_lengths = []
 
     input_batch = np.full((len(batch), dim0, dim1, dim2), PADDING_CONSTANT).astype(np.float32)
-    for i in xrange(len(batch)):
+    for i in range(len(batch)):
         b_img = batch[i]['line_img']
         input_batch[i,:,:b_img.shape[1],:] = b_img
 
@@ -65,18 +65,21 @@ class HwDataset(Dataset):
         self.detailed_ids = []
         for ids_idx, paths in enumerate(self.ids):
             json_path, img_path = paths
+            # print(json_path,"A:" , img_path)
             d = safe_load.json_state(json_path)
+            # print(d)
             if d is None:
                 continue
-            for i in xrange(len(d)):
+            for i in range(len(d)):
 
                 if 'hw_path' not in d[i]:
+                    # print("Error")
                     continue
                 self.detailed_ids.append((ids_idx, i))
 
         if random_subset_size is not None:
             self.detailed_ids = random.sample(self.detailed_ids, min(random_subset_size, len(self.detailed_ids)))
-        print len(self.detailed_ids)
+        # print(len(self.detailed_ids))
 
         self.char_to_idx = char_to_idx
         self.augmentation = augmentation
@@ -97,9 +100,12 @@ class HwDataset(Dataset):
         if 'hw_path' not in gt_json[line_idx]:
             return None
 
+        # print(gt_json)
         hw_path = gt_json[line_idx]['hw_path']
+        # print(hw_path)
 
         hw_path = hw_path.split("/")[-1:]
+        # print(hw_path)
         hw_path = "/".join(hw_path)
 
         hw_folder = os.path.dirname(gt_json_path)
@@ -112,7 +118,7 @@ class HwDataset(Dataset):
         if img.shape[0] != self.img_height:
             if img.shape[0] < self.img_height and not self.warning:
                 self.warning = True
-                print "WARNING: upsampling image to fit size"
+                print("WARNING: upsampling image to fit size")
             percent = float(self.img_height) / img.shape[0]
             img = cv2.resize(img, (0,0), fx=percent, fy=percent, interpolation = cv2.INTER_CUBIC)
 
@@ -128,6 +134,7 @@ class HwDataset(Dataset):
         img = img / 128.0 - 1.0
 
         gt = gt_json[line_idx]['gt']
+        # gt = gt_json[line_idx]['gt']+"@"
         if len(gt) == 0:
             return None
         gt_label = string_utils.str2label_single(gt, self.char_to_idx)

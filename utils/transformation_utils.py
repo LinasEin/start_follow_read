@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn.modules.module import Module
 
-from fast_inverse import inverse_torch
+from .fast_inverse import inverse_torch
 import numpy as np
 
 def compute_renorm_matrix(img):
@@ -19,14 +19,15 @@ def compute_renorm_matrix(img):
         [0,0, 1]
     ], dtype=np.float32)
 
-    inv_c = Variable(torch.from_numpy(inv_c).type(img.data.type()), requires_grad=False)
-    inv_b = Variable(torch.from_numpy(inv_b).type(img.data.type()), requires_grad=False)
+    with torch.no_grad():
+        inv_c = torch.from_numpy(inv_c).type(img.data.type())
+        inv_b = torch.from_numpy(inv_b).type(img.data.type())
 
     return inv_b.mm(inv_c)
 
 def compute_next_state(delta, state):
     out = Variable(torch.zeros(*state.data.shape).type(state.data.type()))
-    for i in xrange(0,3):
+    for i in range(0,3):
         out[:,i+2] = delta[:,i] + state[:,i+2]
     #r*cos(theta) + x = x'
     out[:,0] = out[:,3] * torch.cos(out[:,2]) + state[:,0]
@@ -64,7 +65,7 @@ def compute_basis(pts):
     x = A_inv.bmm(b)
 
     B = A.clone()
-    for i in xrange(3):
+    for i in range(3):
         B[:,:,i] = A[:,:,i] * x[:,i]
     return B
 
@@ -127,11 +128,12 @@ def pt_xyrs_2_xyxy(state):
     y = state[:,:,2:3]
     r = state[:,:,3:4]
     s = state[:,:,4:5]
-
+    # print(x,y,r,s)
     x0 = -torch.sin(r) * s + x
     y0 = -torch.cos(r) * s + y
     x1 =  torch.sin(r) * s + x
     y1 =  torch.cos(r) * s + y
+    # print(x0,y0,x1,y1)
 
     return torch.cat([
         state[:,:,0:1],
@@ -147,17 +149,18 @@ def get_init_matrix(input):
     x = input[:,0:1]
     y = input[:,1:2]
     angles = input[:,2:3]
-    scaler = input[:,3:4]
+    scaler = input[:,3:4].squeeze()
 
-    cosines = torch.cos(angles)
-    sinuses = torch.sin(angles)
+    cosines = torch.cos(angles).squeeze()
+    sinuses = torch.sin(angles).squeeze()
+    # print(x.shape, y.shape, angles.shape,cosines.shape,sinuses.shape, scaler.shape)
     output[:,0,0] =  cosines * scaler
     output[:,1,1] =  cosines * scaler
     output[:,1,0] = -sinuses * scaler
     output[:,0,1] =  sinuses * scaler
 
-    output[:,0,2] = x
-    output[:,1,2] = y
+    output[:,0,2] = x.squeeze()
+    output[:,1,2] = y.squeeze()
 
     return output
 
@@ -171,15 +174,15 @@ def get_step_matrix(input):
     y = input[:,1:2]
     angles = input[:,2:3]
 
-    cosines = torch.cos(angles)
-    sinuses = torch.sin(angles)
+    cosines = torch.cos(angles).squeeze()
+    sinuses = torch.sin(angles).squeeze()
     output[:,0,0] =  cosines
     output[:,1,1] =  cosines
     output[:,1,0] = -sinuses
     output[:,0,1] =  sinuses
 
-    output[:,0,2] = x
-    output[:,1,2] = y
+    output[:,0,2] = x.squeeze()
+    output[:,1,2] = y.squeeze()
 
     return output
 

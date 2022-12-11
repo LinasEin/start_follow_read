@@ -8,29 +8,29 @@ network:
     step_bias:
 
   hw:
-    num_of_outputs: 197
+    num_of_outputs: 80
     num_of_channels: 3
     cnn_out_size: 512 #architecture dependant
     input_height: 32 #architecture dependant
     char_set_path: "data/char_set.json"
 
   lm:
-    fst_path: "../hwn5-comp-2017/data/comp_lm/data/graph/HCLG.fst"
-    mdl_path: "../hwn5-comp-2017/data/comp_lm/data/lang_test/basic.mdl"
-    words_path: "../hwn5-comp-2017/data/comp_lm/data/graph/words.txt"
-    phones_path: "../hwn5-comp-2017/data/comp_lm/data/lang_test/phones.txt"
+    fst_path: "lm_data/graph/HCLG.fst"
+    mdl_path: "lm_data/lang_test/basic.mdl"
+    words_path: "lm_data/graph/words.txt"
+    phones_path: "lm_data/lang_test/phones.txt"
     beam: 8
 
 pretraining:
   training_set:
     img_folder: ""
     json_folder: ""
-    file_list: "data/train_a_training_set.json"
+    file_list: ""#/media/annapurna/Seagate Expansion Drive/Annapurna1/PCRA/transcriptions/data_txt/data/training.json"
 
   validation_set:
     img_folder: ""
     json_folder: ""
-    file_list: "data/train_a_validation_set.json"
+    file_list: ""#/media/annapurna/Seagate Expansion Drive/Annapurna1/PCRA/transcriptions/data_txt/data/val1.json"
 
   sol:
     alpha_alignment: 0.1
@@ -57,18 +57,18 @@ pretraining:
     images_per_epoch: 1000
     stop_after_no_improvement: 10
 
-  snapshot_path: "data/snapshots/init"
+  snapshot_path: "G:/Annapurna1/PCRA/transcriptions/data_txt/data/snapshots_gurleen/init"
 
 training:
   training_set:
     img_folder: ""
     json_folder: ""
-    file_list: "data/train_b_training_set.json"
+    file_list: "../../../PCRA/transcriptions/data_txt/data/training_b_gurleen_set.json"
 
   validation_set:
     img_folder: ""
     json_folder: ""
-    file_list: "data/train_b_validation_set.json"
+    file_list: "../../../PCRA/transcriptions/data_txt/data/validation_b_gurleen_set.json"
 
   sol:
     alpha_alignment: 0.1
@@ -82,26 +82,26 @@ training:
     validation_subset_size: 1000
     batch_size: 1
     images_per_epoch: 10000
-    reset_interval: 3600 #seconds
+    reset_interval: 900 #seconds
 
 
   lf:
     learning_rate: 0.0001 #pyyaml bug: no scientific notation
 
     batch_size: 1
-    refresh_interval: 3600 #seconds
+    refresh_interval: 900 #3600 #seconds
     images_per_epoch: 1000 #batches
     validation_subset_size: 100 #images
-    reset_interval: 3600 #seconds
+    reset_interval: 900 #3600 #seconds
 
   hw:
     learning_rate: 0.0002 #pyyaml bug: no scientific notation
 
     batch_size: 8
-    refresh_interval: 3600 #seconds
-    images_per_epoch: 20000 #batches
-    validation_subset_size: 2000 #images
-    reset_interval: 3600 #seconds
+    refresh_interval: 900 #3600 #seconds
+    images_per_epoch: 46 #batches
+    validation_subset_size: 14 #images
+    reset_interval: 900 #3600 #seconds
 
   alignment:
     accept_threshold: 0.1
@@ -115,10 +115,10 @@ training:
        lf_nms_thresholds: [0.1,0.3,0.5,0.7,0.9]
 
   snapshot:
-    best_overall: "data/snapshots/best_overall"
-    best_validation: "data/snapshots/best_validation"
-    current: "data/snapshots/current"
-    pretrain: "data/snapshots/init"
+    best_overall: "../../../PCRA/transcriptions/data_txt/data/snapshots_gurleen/best_overall"
+    best_validation: "../../../PCRA/transcriptions/data_txt/data/snapshots_gurleen/best_validation"
+    current: "../../../PCRA/transcriptions/data_txt/data/snapshots_gurleen/current"
+    pretrain: "../../../PCRA/transcriptions/data_txt/data/snapshots_gurleen/init"
 
 post_processing:
    sol_threshold: 0.1

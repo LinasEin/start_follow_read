@@ -36,21 +36,31 @@ def init_model(config, sol_dir='best_validation', lf_dir='best_validation', hw_d
     if only_load is None or only_load == 'lf' or 'lf' in only_load:
         lf = LineFollower(config['network']['hw']['input_height'])
         lf_state = safe_load.torch_state(os.path.join(config['training']['snapshot'][lf_dir], "lf.pt"))
+        
 
         # special case for backward support of
         # previous way to save the LF weights
         if 'cnn' in lf_state:
             new_state = {}
-            for k, v in lf_state.iteritems():
+            for k, v in lf_state.items():
+                print(k)                
                 if k == 'cnn':
-                    for k2, v2 in v.iteritems():
-                        new_state[k+"."+k2]=v2
+                    for k2, v2 in v.items():                        
+                        if "running" in k2:
+                            AAA=1
+                        else:
+                            new_state[k+"."+k2]=v2
                 if k == 'position_linear':
-                    for k2, v2 in  v.state_dict().iteritems():
+                    # print(k2, v2)
+                    for k2, v2 in  v.state_dict().items():
                         new_state[k+"."+k2]=v2
                 # if k == 'learned_window':
+                #     print(k, v.data)
                 #     new_state[k]=nn.Parameter(v.data)
+            
             lf_state = new_state
+            
+
 
         lf.load_state_dict(lf_state)
         lf.cuda()

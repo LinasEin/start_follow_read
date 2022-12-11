@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Variable
+import sys
 
 from utils import transformation_utils
 
@@ -22,14 +23,14 @@ def get_patches(image, crop_window, grid_gen, allow_end_early=False):
         crop_size = torch.ceil(max_d_bounds).long()
         if image.is_cuda:
             crop_size = crop_size.cuda()
-        w = crop_size.data[0]
-
+        w = crop_size.item()
+        
         memory_space = Variable(torch.zeros(d_bounds.size(0), 3, w, w).type_as(image.data), requires_grad=False)
         translations = []
         N = transformation_utils.compute_renorm_matrix(memory_space)
         all_skipped = True
 
-        for b_i in xrange(memory_space.size(0)):
+        for b_i in range(memory_space.size(0)):
 
             o = floored_idx_offsets[b_i]
 

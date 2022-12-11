@@ -39,7 +39,7 @@ def training_step(config):
         char_set = json.load(f)
 
     idx_to_char = {}
-    for k,v in char_set['idx_to_char'].iteritems():
+    for k,v in char_set['idx_to_char'].items():
         idx_to_char[int(k)] = v
 
     train_config = config['training']
@@ -72,7 +72,7 @@ def training_step(config):
 
     lowest_loss = np.inf
     lowest_loss_i = 0
-    for epoch in xrange(10000000):
+    for epoch in range(100000000):
         lf.eval()
         sum_loss = 0.0
         steps = 0.0
@@ -92,7 +92,7 @@ def training_step(config):
             #There might be a way to handle this case later,
             #but for now we will skip it
             if len(xy_positions) <= 1:
-                print "Skipping"
+                print("Skipping")
                 continue
 
             grid_line, _, _, xy_output = lf(img, positions[:1], steps=len(positions), skip_grid=False)
@@ -123,8 +123,8 @@ def training_step(config):
             # steps += 1
 
         if epoch == 0:
-            print "First Validation Step Complete"
-            print "Benchmark Validation Loss:", sum_loss/steps
+            print("First Validation Step Complete")
+            print("Benchmark Validation Loss:", sum_loss/steps)
             lowest_loss = sum_loss/steps
 
             _, lf, _ = init_model(config, lf_dir='current', only_load="lf")
@@ -132,14 +132,14 @@ def training_step(config):
             optimizer = torch.optim.Adam(lf.parameters(), lr=train_config['lf']['learning_rate'])
             optim_path = os.path.join(train_config['snapshot']['current'], "lf_optim.pt")
             if os.path.exists(optim_path):
-                print "Loading Optim Settings"
+                print("Loading Optim Settings")
                 optimizer.load_state_dict(safe_load.torch_state(optim_path))
             else:
-                print "Failed to load Optim Settings"
+                print("Failed to load Optim Settings")
 
         if lowest_loss > sum_loss/steps:
             lowest_loss = sum_loss/steps
-            print "Saving Best"
+            print("Saving Best")
 
             dirname = train_config['snapshot']['best_validation']
             if not len(dirname) != 0 and os.path.exists(dirname):
@@ -152,15 +152,15 @@ def training_step(config):
 
         test_loss = sum_loss/steps
 
-        print "Test Loss", sum_loss/steps, lowest_loss
-        print "Time:", time.time() - start_time
-        print ""
+        print("Test Loss", sum_loss/steps, lowest_loss)
+        print("Time:", time.time() - start_time)
+        print("")
 
         if allowed_training_time < (time.time() - init_training_time):
-            print "Out of time: Exiting..."
+            print("Out of time: Exiting...")
             break
 
-        print "Epoch", epoch
+        print("Epoch", epoch)
         sum_loss = 0.0
         steps = 0.0
         lf.train()
@@ -193,16 +193,16 @@ def training_step(config):
             loss.backward()
             optimizer.step()
 
-            sum_loss += loss.data[0]
+            sum_loss += loss.data#[0]
             steps += 1
 
 
-        print "Train Loss", sum_loss/steps
-        print "Real Epoch", train_dataloader.epoch
-        print "Time:", time.time() - start_time
+        print("Train Loss", sum_loss/steps)
+        print("Real Epoch", train_dataloader.epoch)
+        print("Time:", time.time() - start_time)
 
     ## Save current snapshots for next iteration
-    print "Saving Current"
+    print("Saving Current")
     dirname = train_config['snapshot']['current']
     if not len(dirname) != 0 and os.path.exists(dirname):
         os.makedirs(dirname)
@@ -212,17 +212,19 @@ def training_step(config):
 
     optim_path = os.path.join(dirname, "lf_optim.pt")
     torch.save(optimizer.state_dict(), optim_path)
+    # sys.exit()
 
 if __name__ == "__main__":
     config_path = sys.argv[1]
 
     with open(config_path) as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
 
     cnt = 0
-    while True:
-        print ""
-        print "Full Step", cnt
-        print ""
+    if True:
+        print("")
+        print("LF Full Step", cnt)
+        print("")
         cnt += 1
         training_step(config)
+        # sys.exit()

@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 image_paths.append(os.path.join(root, f))
 
     with open(sys.argv[2]) as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
 
     output_directory = sys.argv[3]
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         char_set = json.load(f)
 
     idx_to_char = {}
-    for k,v in char_set['idx_to_char'].iteritems():
+    for k,v in char_set['idx_to_char'].items():
         idx_to_char[int(k)] = v
 
     char_to_idx = char_set['char_to_idx']
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     e2e.eval()
 
     for image_path in sorted(image_paths):
-        print image_path
+        print(image_path)
 
         org_img = cv2.imread(image_path)
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         out = e2e_postprocessing.results_to_numpy(out)
 
         if out is None:
-            print "No Results"
+            print("No Results")
             continue
 
         # take into account the padding

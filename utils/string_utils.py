@@ -36,7 +36,7 @@ def label2input_single(value, num_of_inputs, char_break_interval):
     return np.array(input_data)
 
 def label2str_single(label, indexToCharacter, asRaw, spaceChar = "~"):
-    string = u""
+    string = ""
     for i in range(len(label)):
         if label[i] == 0:
             if asRaw:
@@ -54,4 +54,5 @@ def naive_decode(output):
     for i in range(len(output)):
         if rawPredData[i] != 0 and not ( i > 0 and rawPredData[i] == rawPredData[i-1] ):
             predData.append(rawPredData[i])
+    # print(predData)
     return predData, list(rawPredData)

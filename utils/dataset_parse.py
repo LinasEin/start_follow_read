@@ -7,6 +7,7 @@ def load_file_list(config):
         data = json.load(f)
 
     for d in data:
+        # print("files:",d)
         json_path = os.path.join(config['json_folder'], d[0])
         img_path = os.path.join(config['img_folder'], d[1])
 

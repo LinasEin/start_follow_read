@@ -36,6 +36,7 @@ from e2e import validation_utils
 from utils.dataset_parse import load_file_list
 
 def alignment_step(config, dataset_lookup=None, model_mode='best_validation', percent_range=None):
+    # torch.cuda.empty_cache()
 
     set_list = load_file_list(config['training'][dataset_lookup])
 
@@ -44,6 +45,7 @@ def alignment_step(config, dataset_lookup=None, model_mode='best_validation', pe
         end = int(len(set_list) * percent_range[1])
         set_list = set_list[start:end]
 
+    # print(set_list)
     dataset = AlignmentDataset(set_list, None)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=alignment_dataset.collate)
 
@@ -53,24 +55,29 @@ def alignment_step(config, dataset_lookup=None, model_mode='best_validation', pe
         char_set = json.load(f)
 
     idx_to_char = {}
-    for k,v in char_set['idx_to_char'].iteritems():
+    for k,v in char_set['idx_to_char'].items():
         idx_to_char[int(k)] = v
 
-    sol, lf, hw = init_model(config, sol_dir=model_mode, lf_dir=model_mode, hw_dir=model_mode)
+    with torch.no_grad():
+        sol, lf, hw = init_model(config, sol_dir=model_mode, lf_dir=model_mode, hw_dir=model_mode)
 
     e2e = E2EModel(sol, lf, hw)
     dtype = torch.cuda.FloatTensor
     e2e.eval()
+    # if percent_range is None:
+    #     e2e.eval()
+    # else:
+    #     e2e.train()
 
     post_processing_config = config['training']['alignment']['validation_post_processing']
     sol_thresholds = post_processing_config['sol_thresholds']
-    sol_thresholds_idx = range(len(sol_thresholds))
+    sol_thresholds_idx = list(range(len(sol_thresholds)))
 
     lf_nms_ranges = post_processing_config['lf_nms_ranges']
-    lf_nms_ranges_idx = range(len(lf_nms_ranges))
+    lf_nms_ranges_idx = list(range(len(lf_nms_ranges)))
 
     lf_nms_thresholds = post_processing_config['lf_nms_thresholds']
-    lf_nms_thresholds_idx = range(len(lf_nms_thresholds))
+    lf_nms_thresholds_idx = list(range(len(lf_nms_thresholds)))
 
     results = defaultdict(list)
     aligned_results = []
@@ -84,12 +91,12 @@ def alignment_step(config, dataset_lookup=None, model_mode='best_validation', pe
         a+=1
 
         if a%100 == 0:
-            print a, np.mean(aligned_results)
+            print(a, np.mean(aligned_results))
 
 
         x = x[0]
         if x is None:
-            print "Skipping alignment because it returned None"
+            print("Skipping alignment because it returned None")
             continue
 
         img = x['resized_img'].numpy()[0,...].transpose([2,1,0])
@@ -99,12 +106,19 @@ def alignment_step(config, dataset_lookup=None, model_mode='best_validation', pe
         full_img = ((full_img+1)*128).astype(np.uint8)
 
         gt_lines = x['gt_lines']
-        gt = "\n".join(gt_lines)
+        gt_lines_modified=[]
+        # for gg in gt_lines:
+        #     gt_lines_modified.append(gg+"@")
+
+        # print(gt_lines_modified)
+        gt = "\n".join(gt_lines)#_modified)
+        # print(gt)
+        # sys.exit()
 
         out_original = e2e(x)
         if out_original is None:
             #TODO: not a good way to handle this, but fine for now
-            print "Possible Error: Skipping alignment on image"
+            print("Possible Error: Skipping alignment on image")
             continue
 
         out_original = e2e_postprocessing.results_to_numpy(out_original)
@@ -161,12 +175,14 @@ def alignment_step(config, dataset_lookup=None, model_mode='best_validation', pe
     if dataset_lookup == "validation_set":
         # Skipping because we didn't do the hyperparameter search
         sum_results = {}
-        for k, v in results.iteritems():
+        for k, v in results.items():
             sum_results[k] = np.mean(v)
 
-        sum_results = sorted(sum_results.iteritems(), key=operator.itemgetter(1))
+        sum_results = sorted(iter(sum_results.items()), key=operator.itemgetter(1))
         sum_results = sum_results[0]
 
+    
+    # return sum_results, np.mean(aligned_results), np.mean(aligned_results), sol, lf, hw
     return sum_results, np.mean(aligned_results), np.mean(best_ever_results), sol, lf, hw
 
 def main():
@@ -188,39 +204,39 @@ def main():
 
     best_validation_so_far = None
     if mode in ['all', 'validation', 'init']:
-        print "Running validation with best overall weight for baseline"
+        print("Running validation with best overall weight for baseline")
         error, i_error, mi_error, _, _, _ = alignment_step(config, dataset_lookup='validation_set', model_mode="best_overall")
         best_validation_so_far = error[1]
-        print "Baseline Validation", error
+        print("Baseline Validation", error)
 
     real_json_folder = config['training']['training_set']['json_folder']
     while True:
 
-        for i in xrange(start_idx, end_idx):
+        for i in range(start_idx, end_idx):
             i_start = float(i) / config['training']['alignment']['train_refresh_groups']
             i_stop = float(i+1) / config['training']['alignment']['train_refresh_groups']
 
             if mode in ['all', 'training', 'init']:
-                print ""
-                print "Train running ", i
+                print("")
+                print("Train running ", i)
                 start = time.time()
                 error, i_error, mi_error, sol, lf, hw  = alignment_step(config, dataset_lookup='training_set', percent_range=[i_start, i_stop])
-                print "Error:", error
-                print "Ideal Error:", i_error
-                print "Most Ideal Error:", mi_error
-                print "Time:", time.time() - start
+                print("Error:", error)
+                print("Ideal Error:", i_error)
+                print("Most Ideal Error:", mi_error)
+                print("Time:", time.time() - start)
 
             if mode == 'init':
                 #End early
                 return
 
             if mode in ['all', 'validation']:
-                print ""
-                print "Test running"
+                print("")
+                print("Test running")
                 start = time.time()
                 error, i_error, mi_error, sol, lf, hw = alignment_step(config, dataset_lookup='validation_set')
                 if error[1] <= best_validation_so_far:
-                    print "Saving best..."
+                    print("Saving best...")
                     dirname = config['training']['snapshot']['best_overall']
                     if not len(dirname) != 0 and os.path.exists(dirname):
                         os.makedirs(dirname)
@@ -232,10 +248,11 @@ def main():
                     torch.save(hw.state_dict(), save_path)
                     best_validation_so_far = error[1]
 
-                print "Error:", error
-                print "Ideal Error:", i_error
-                print "Most Ideal Error:", mi_error
-                print "Time:", time.time() - start
+                print("Error:", error)
+                print("Ideal Error:", i_error)
+                print("Most Ideal Error:", mi_error)
+                print("Time:", time.time() - start)
+        sys.exit()
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from kaldi.util.io import xopen
 from kaldi.matrix import Matrix
 from kaldi.fstext.utils import get_linear_symbol_sequence
 
-from lm_stats import LMStats
+from .lm_stats import LMStats
 import numpy as np
 
 import codecs
@@ -28,23 +28,23 @@ DICT_MORPH = {'[': 'LSB', ']': 'RSB', ';': 'SEMI', ':': 'COLON', '_': 'USCORE',
 MIN_WEIGHT = np.log(5.0e-16)
 
 def kaldi2str_single(kaldi_out):
-    return u"".join([KALDI_SPECIAL_SYM.get(k, k) for k in kaldi_out])
+    return "".join([KALDI_SPECIAL_SYM.get(k, k) for k in kaldi_out])
 
 
 def create_phone_map( filename, idx_to_char):
 
-    #Old code for parsing. We can read in as utf8 directly with this method
+    # #Old code for parsing. We can read in as utf8 directly with this method
     # dictSave = {}
     # with codecs.open(filename,'r',encoding='utf8') as f:
     #     data = f.read()
-    #
+    
     # for index, text in enumerate(data.split("\n")):
     #     entries = re.split('\s', text, 2)
     #     if (len(entries)<2 or len(entries[1])==0):
     #         continue
     #     dictSave[entries[0]] = int(entries[1])
-    #
-    # dictSave['EPS'] = dictSave['NON']
+    
+    # # dictSave['EPS'] = dictSave['<eps>']
     # for key in DICT_MORPH:
     #     if (dictSave.get(DICT_MORPH[key],None) is None):
     #         continue
@@ -52,18 +52,26 @@ def create_phone_map( filename, idx_to_char):
 
     # I perfer to used the library to parse the symbol
     # table, but it doesn't read in as utf8
+    # print(filename)
     ph_to_idx = {}
     phone_table = SymbolTable.read_text(filename)
     for i in range(phone_table.num_symbols()):
-        phone_sym = phone_table.find_symbol(i).decode('utf8')
+        # print(phone_table[i])
+        # print(i)
+        phone_sym = phone_table.find_symbol(i)
+        # print(i, phone_sym)
         ph_to_idx[phone_sym] = i
 
-    ph_to_idx['EPS'] = ph_to_idx['NON']
+    print(ph_to_idx)
+    ph_to_idx['EPS'] = ph_to_idx['<eps>']
     for key in DICT_MORPH:
+        print(key)
         if ph_to_idx.get(DICT_MORPH[key],None) is None:
             continue
         ph_to_idx[key] = ph_to_idx[DICT_MORPH[key]]
+    # ph_to_idx =dictSave
 
+    # print(ph_to_idx)
     reorder_1 = []
     reorder_2 = []
     for pyphnid in range(len(idx_to_char)+1):
@@ -71,11 +79,14 @@ def create_phone_map( filename, idx_to_char):
             a = "EPS"
         else:
             a = idx_to_char[pyphnid]
+            # print("Before:", a)
             a = DICT_MORPH.get(a,a)
+            # print("After:", a)
+            # sys.exit()
+        # print(a)
         newa = ph_to_idx.get(a,None)
         if newa == None:
             continue
-
         reorder_1.append(newa-1)
         reorder_2.append(pyphnid)
 
@@ -94,7 +105,7 @@ class LMDecoder(object):
 
         self.acoustic_scale = params.get('acoustic', 1.2)
         if self.acoustic_scale < 0:
-            print "Warning: acoustic scale is less than 0"
+            print("Warning: acoustic scale is less than 0")
         allow_partial = params.get('allow_partial', True)
         beam = params.get('beam', 13)
         self.alphaweight = params.get('alphaweight', 0.3)
@@ -122,6 +133,9 @@ class LMDecoder(object):
             self.stats.reset()
             self.add_stats_phase = False
 
+        print("Annapurna:",self.reorder_1)
+        print("Annapurna:",self.reorder_2)
+        print(data.shape)
         if len(data.shape) == 3:
             return [ self.decode_one(d, as_idx) for d in data ]
         else:
@@ -131,11 +145,17 @@ class LMDecoder(object):
     def decode_one(self, data, as_idx=False):
 
         #Reweight and reorder for LM
+        print("data in:", data.shape)
         reweighted = self.stats_state.reweight(data, self.alphaweight)
+        print("Annapurna, reweighted:",reweighted.shape)
         reweighted = reweighted[:,self.reorder_2]
+        print("Annapurna:",reweighted.shape)
+        print("Annapurna:",self.reorder_1)
+        print("Annapurna:",self.reorder_2)
 
         reweighted_prime = np.full((reweighted.shape[0], self.reorder_1.max()+1), MIN_WEIGHT, dtype=np.float32)
-        reweighted_prime[:,self.reorder_1] = reweighted
+        print("Annapurna:",reweighted.shape, reweighted_prime.shape)
+        reweighted_prime[:,self.reorder_1+1] = reweighted
 
         #Apply LM
         reweighted = Matrix(reweighted_prime)
@@ -152,6 +172,7 @@ class LMDecoder(object):
 
     def add_stats(self, data):
         if not self.add_stats_phase:
-            print "Reseting lm stats because more stats added after a decoding"
+            print("Reseting lm stats because more stats added after a decoding")
             self.add_stats_phase = True
         self.stats.add_stats(data)
+

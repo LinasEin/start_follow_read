@@ -8,7 +8,7 @@ def load_char_set(char_set_path):
         char_set = json.load(f)
 
     idx_to_char = {}
-    for k,v in char_set['idx_to_char'].iteritems():
+    for k,v in char_set['idx_to_char'].items():
         idx_to_char[int(k)] = v
 
     return idx_to_char, char_set['char_to_idx']
@@ -31,7 +31,7 @@ if __name__ == "__main__":
             for data_item in data:
                 for c in data_item.get('gt', None):
                     if c is None:
-                        print "There was a None GT"
+                        print("There was a None GT")
                         continue
                     if c not in out_char_to_idx:
                         out_char_to_idx[c] = cnt
@@ -52,10 +52,10 @@ if __name__ == "__main__":
         "idx_to_char": out_idx_to_char2
     }
 
-    for k,v in sorted(char_freq.iteritems(), key=lambda x: x[1]):
-        print k, v
+    for k,v in sorted(iter(char_freq.items()), key=lambda x: x[1]):
+        print(k, v)
 
-    print("Size:", len(output_data['char_to_idx']))
+    print(("Size:", len(output_data['char_to_idx'])))
 
     with open(character_set_path, 'w') as outfile:
         json.dump(output_data, outfile)

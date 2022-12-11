@@ -62,12 +62,14 @@ class SolDataset(Dataset):
 
         new_ids = []
         for json_path, img_path in self.ids:
+            # print(json_path)
 
             gt_json = safe_load.json_state(json_path)
             if gt_json is None:
                 continue
             failed = False
             for j, gt_item in enumerate(gt_json):
+                # print(gt_item)
                 if 'sol' not in gt_item:
                     failed = True
                     break
@@ -82,7 +84,7 @@ class SolDataset(Dataset):
 
         if random_subset_size is not None:
             self.ids = random.sample(self.ids, min(random_subset_size, len(self.ids)))
-        print "SOL Ids Count:", len(self.ids)
+        print("SOL Ids Count:", len(self.ids))
         self.transform = transform
 
 
@@ -92,6 +94,7 @@ class SolDataset(Dataset):
     def __getitem__(self, idx):
 
         gt_json_path, img_path = self.ids[idx]
+        # print(gt_json_path)
 
         gt_json = safe_load.json_state(gt_json_path)
         if gt_json is None:

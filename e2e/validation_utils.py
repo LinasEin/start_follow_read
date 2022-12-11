@@ -39,7 +39,7 @@ def save_improved_idxs(improved_idxs, decoded_hw, decoded_raw_hw, out, x, json_f
 
 
     # for i in improved_idxs:
-    for i in xrange(len(output_lines)):
+    for i in range(len(output_lines)):
 
         if not i in improved_idxs:
             output_lines[i] = x['gt_json'][i]
@@ -55,7 +55,7 @@ def save_improved_idxs(improved_idxs, decoded_hw, decoded_raw_hw, out, x, json_f
         after_line_points = []
         lf_path = out['lf']
         end = out['ending'][k]
-        for j in xrange(len(lf_path)):
+        for j in range(len(lf_path)):
             p = lf_path[j][k]
             s = out['results_scale']
 
@@ -108,6 +108,7 @@ def save_improved_idxs(improved_idxs, decoded_hw, decoded_raw_hw, out, x, json_f
 
     json_path = x['json_path']
     with open(json_path, 'w') as f:
+        # print('written data to:', f)
         json.dump(output_lines, f)
 
 def update_ideal_results(pick, costs, decoded_hw, gt_json):
@@ -115,7 +116,7 @@ def update_ideal_results(pick, costs, decoded_hw, gt_json):
     most_ideal_pred = []
     improved_idxs = {}
 
-    for i in xrange(len(gt_json)):
+    for i in range(len(gt_json)):
         gt_obj = gt_json[i]
 
         prev_pred = gt_obj.get('pred', '')

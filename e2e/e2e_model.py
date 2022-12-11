@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 from utils import string_utils, error_rates
 from utils import transformation_utils
-import handwriting_alignment_loss
+from . import handwriting_alignment_loss
 
-import e2e_postprocessing
+from . import e2e_postprocessing
 
 import copy
 from scipy.optimize import linear_sum_assignment
@@ -38,10 +38,10 @@ class E2EModel(nn.Module):
 
     def forward(self, x, use_full_img=True, accpet_threshold=0.1, volatile=True, gt_lines=None, idx_to_char=None):
 
-        sol_img = Variable(x['resized_img'].type(self.dtype), requires_grad=False, volatile=volatile)
+        sol_img = Variable(x['resized_img'].type(self.dtype), requires_grad=False)
 
         if use_full_img:
-            img = Variable(x['full_img'].type(self.dtype), requires_grad=False, volatile=volatile)
+            img = Variable(x['full_img'].type(self.dtype), requires_grad=False)
             scale = x['resize_scale']
             results_scale = 1.0
         else:
@@ -55,7 +55,7 @@ class E2EModel(nn.Module):
 
         #Take at least one point
         sorted_start, sorted_indices = torch.sort(start[...,0:1], dim=1, descending=True)
-        min_threshold = sorted_start[0,1,0].data.cpu()[0]
+        min_threshold = sorted_start[0,1,0].data
         accpet_threshold = min(accpet_threshold, min_threshold)
 
         select = original_starts[...,0:1] >= accpet_threshold
@@ -86,18 +86,20 @@ class E2EModel(nn.Module):
         p_interval = positions.size(0)
         lf_xy_positions = None
         line_imgs = []
-        for p in xrange(0,min(positions.size(0), np.inf), p_interval):
+        for p in range(0,min(positions.size(0), np.inf), p_interval):
             sub_positions = positions[p:p+p_interval,0,:]
             sub_select_idx = select_idx[p:p+p_interval]
 
             batch_size = sub_positions.size(0)
             sub_positions = [sub_positions]
+            # print(sub_positions)
+            # sys.exit()
 
             expand_img = forward_img.expand(sub_positions[0].size(0), img.size(1), img.size(2), img.size(3))
 
-            step_size = 5
-            extra_bw = 1
-            forward_steps = 40
+            step_size = 8 #5
+            extra_bw = 1 #1
+            forward_steps = 30 #40
             
             grid_line, _, out_positions, xy_positions = self.lf(expand_img, sub_positions, steps=step_size)
             grid_line, _, out_positions, xy_positions = self.lf(expand_img, [out_positions[step_size]], steps=step_size+extra_bw, negate_lw=True)
@@ -106,7 +108,7 @@ class E2EModel(nn.Module):
             if lf_xy_positions is None:
                 lf_xy_positions = xy_positions
             else:
-                for i in xrange(len(lf_xy_positions)):
+                for i in range(len(lf_xy_positions)):
                     lf_xy_positions[i] = torch.cat([
                         lf_xy_positions[i],
                         xy_positions[i]
@@ -114,7 +116,7 @@ class E2EModel(nn.Module):
             expand_img = expand_img.transpose(2,3)
 
             hw_interval = p_interval
-            for h in xrange(0,min(grid_line.size(0), np.inf), hw_interval):
+            for h in range(0,min(grid_line.size(0), np.inf), hw_interval):
                 sub_out_positions = [o[h:h+hw_interval] for o in out_positions]
                 sub_xy_positions = [o[h:h+hw_interval] for o in xy_positions]
                 sub_sub_select_idx = sub_select_idx[h:h+hw_interval]
@@ -138,6 +140,7 @@ class E2EModel(nn.Module):
 
 
         hw_out = torch.cat(hw_out, 0)
+        # print(original_starts,positions,lf_xy_positions,hw_out,results_scale,line_imgs)
 
 
         return {

@@ -1,4 +1,5 @@
-This repo relies on an old version of pytorch and python2 and might be difficult to run at this point. A python3 version based on a newer version of pytorch has been developed. I personally haven't verified it for correctness, but it appears to mirror this code very closely. https://github.com/sharmaannapurna/start_follow_read_py3. 
+This is an updated version of SFR repo. Contains updated dependency versions (+py3). Code updates are based on https://github.com/sharmaannapurna/start_follow_read_py3, however, this suggested solution does not include all the scripts to run preprocessing, training and validation. Tested with validation scripts.
+There still might be some flaws especially where outdated py2 code is used.
 
 
 # Start Follow Read
@@ -13,9 +14,9 @@ We will also include pretrained models, results, and the segmentation data infer
 
 ## Dependencies
 
-The dependencies are all found in `environment.yaml`. They are installed as follows.
+The dependencies are all found in `environment.yml`. They are installed as follows.
 ```
-conda env create -f environment.yaml
+conda env create -f environment.yml
 ```
 
 The environment is activated as `source activate sfr_env`.
