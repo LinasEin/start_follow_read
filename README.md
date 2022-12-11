@@ -1,5 +1,5 @@
-This is an updated version of SFR repo. Contains updated dependency versions (+py3). Code updates are based on https://github.com/sharmaannapurna/start_follow_read_py3, however, this suggested solution does not include all the scripts to run preprocessing, training and validation. Tested with validation scripts.
-There still might be some flaws especially where outdated py2 code is used.
+This is an updated version of SFR repo. Contains fresh dependency versions (+py3). Code changes are based on https://github.com/sharmaannapurna/start_follow_read_py3, however, this suggested solution does not include all the scripts to run preprocessing, training and validation. Tested with validation scripts.
+There still might be some flaws left, especially where outdated py2 code is used.
 
 
 # Start Follow Read
